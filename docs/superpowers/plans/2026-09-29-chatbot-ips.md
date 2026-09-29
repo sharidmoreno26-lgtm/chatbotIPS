@@ -82,6 +82,7 @@ Comando para correr pruebas (todas las tareas): `docker compose run --rm -T back
 __pycache__/
 *.pyc
 .pytest_cache/
+.superpowers/
 ```
 
 - [ ] **Step 2: Crear `.env.example` y copiarlo a `.env`**
@@ -1198,7 +1199,7 @@ def test_detectar_intencion(pregunta, hay_med, esperado):
 
 
 def test_toda_intencion_tiene_permisos_y_manejador():
-    todas = {v for k, v in vars(i).items() if k.isupper() and isinstance(v, str)}
+    todas = {v for k, v in vars(i).items() if k.isupper() and not k.startswith("_") and isinstance(v, str)}
     assert todas == set(permisos.PERMISOS) == set(respuestas.MANEJADORES)
 ```
 
