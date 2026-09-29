@@ -82,6 +82,7 @@ Intenciones y roles:
 | MAYOR_MOVIMIENTO_MES | ✅ | – | – |
 | BAJO_STOCK | ✅ | ✅ | – |
 | PROXIMOS_A_VENCER | ✅ | ✅ | ✅ |
+| REVISION_VENCIMIENTO ("¿qué debo revisar por vencimiento?") | ✅ | ✅ | ✅ |
 | CONSULTAR_INVENTARIO_MEDICAMENTO | ✅ | ✅ | ✅ |
 | ENTRADAS_MEDICAMENTO_MES | – | ✅ | – |
 | SALIDAS_MEDICAMENTO_MES | – | ✅ | – |
