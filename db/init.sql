@@ -70,7 +70,7 @@ INSERT INTO medicamentos (nombre, principio_activo, presentacion, cantidad_actua
 -- Mes anterior (día negativo): 2 entradas y 1 salida, que NO deben contarse en "este mes".
 INSERT INTO movimientos (medicamento_id, tipo, cantidad, fecha, usuario_id)
 SELECT v.med, v.tipo, v.cant,
-       (date_trunc('month', CURRENT_DATE)::date + v.dia) + time '09:00', v.usr
+       LEAST((date_trunc('month', CURRENT_DATE)::date + v.dia) + time '09:00', date_trunc('minute', localtimestamp)), v.usr
 FROM (VALUES
     (1, 'ENTRADA', 100,  2, 3),
     (1, 'SALIDA',   85,  5, 2),

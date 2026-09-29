@@ -15,13 +15,23 @@ const Api = (() => {
     const cabeceras = { "Content-Type": "application/json" };
     const token = sessionStorage.getItem("token");
     if (token) cabeceras.Authorization = `Bearer ${token}`;
-    const respuesta = await fetch(`/api${ruta}`, { ...opciones, headers: cabeceras });
+    let respuesta;
+    try {
+      respuesta = await fetch(`/api${ruta}`, { ...opciones, headers: cabeceras });
+    } catch {
+      throw new Error("No se pudo conectar con el servidor.");
+    }
     const datos = await respuesta.json().catch(() => ({}));
     if (respuesta.status === 401 && ruta !== "/auth/login") {
       cerrarSesion();
       throw new Error("Tu sesión terminó. Inicia sesión de nuevo.");
     }
-    if (!respuesta.ok) throw new Error(mensajeDeError(datos));
+    if (!respuesta.ok) {
+      if (respuesta.status >= 500 && typeof datos.detail !== "string") {
+        throw new Error("Error del servidor, intente de nuevo.");
+      }
+      throw new Error(mensajeDeError(datos));
+    }
     return datos;
   }
 

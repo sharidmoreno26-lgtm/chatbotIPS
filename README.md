@@ -127,3 +127,15 @@ El menú de la página se adapta al rol, pero la protección real está en el se
 docker compose run --rm backend pytest -q   # pruebas automáticas (restauran los datos de demostración)
 python3 scripts/smoke.py                    # las 15 preguntas de punta a punta
 ```
+
+Si cambiaste `FRONTEND_PORT`, el script necesita la URL, por ejemplo: `python3 scripts/smoke.py http://localhost:8080`.
+
+## Antes de la demo: reiniciar los datos
+
+Las fechas de los datos de ejemplo son relativas al día en que se ejecuta `init.sql`, y el volumen de la base de datos persiste. Con el tiempo los datos de demostración quedan desactualizados. Para reiniciarlos:
+
+```bash
+docker compose exec -T db sh -c 'psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -f /docker-entrypoint-initdb.d/init.sql'
+```
+
+(`init.sql` borra y vuelve a crear las tablas). Alternativa: `docker compose down -v` y luego `docker compose up --build`. Ejecutar las pruebas con pytest también restaura los datos.

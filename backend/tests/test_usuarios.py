@@ -38,3 +38,8 @@ def test_validacion_de_datos_de_usuario(client, admin):
     ]
     for cuerpo in malos:
         assert client.post("/usuarios", headers=admin, json=cuerpo).status_code == 422, cuerpo
+
+
+def test_nombre_con_caracter_nul_da_422(client, admin):
+    r = client.post("/usuarios", headers=admin, json={**NUEVO, "nombre": "Per\u0000sona"})
+    assert r.status_code == 422

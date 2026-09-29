@@ -11,7 +11,7 @@ router = APIRouter(prefix="/usuarios", tags=["usuarios"])
 
 
 class UsuarioNuevo(BaseModel):
-    nombre: str = Field(min_length=1, max_length=100)
+    nombre: str = Field(min_length=1, max_length=100, pattern=r"^[^\x00]*$")
     usuario: str = Field(pattern=r"^[a-z0-9_]{3,30}$")
     password: str = Field(min_length=8, max_length=72)
     rol: Literal["ADMINISTRADOR", "FARMACIA", "ALMACENISTA"]

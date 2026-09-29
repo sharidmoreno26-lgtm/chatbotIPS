@@ -8,7 +8,7 @@ router = APIRouter(prefix="/auth", tags=["auth"])
 
 
 class LoginEntrada(BaseModel):
-    usuario: str = Field(min_length=1, max_length=30)
+    usuario: str = Field(min_length=1, max_length=30, pattern=r"^[^\x00]*$")
     password: str = Field(min_length=1, max_length=72)
 
 

@@ -52,3 +52,8 @@ def test_me_devuelve_el_usuario(client, almacen):
     r = client.get("/auth/me", headers=almacen)
     assert r.status_code == 200
     assert r.json() == {"nombre": "Almacenista Demo", "usuario": "almacen", "rol": "ALMACENISTA"}
+
+
+def test_login_con_caracter_nul_da_422(client):
+    r = client.post("/auth/login", json={"usuario": "ad\u0000min", "password": "demo1234"})
+    assert r.status_code == 422

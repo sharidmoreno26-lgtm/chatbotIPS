@@ -57,7 +57,7 @@ def fecha_mes(conn):
 
     def _fecha(dia):
         fila = conn.execute(
-            "SELECT to_char(date_trunc('month', CURRENT_DATE)::date + %s::int, 'DD/MM/YYYY') AS f",
+            "SELECT to_char(LEAST(date_trunc('month', CURRENT_DATE)::date + %s::int, CURRENT_DATE), 'DD/MM/YYYY') AS f",
             (dia,),
         ).fetchone()
         return fila["f"]
