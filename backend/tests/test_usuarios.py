@@ -85,12 +85,26 @@ def test_otros_roles_y_sin_token_no_pueden_eliminar(client, farmacia, almacen):
     assert client.delete("/usuarios/3").status_code == 401
 
 
-def test_usuario_eliminado_conserva_sus_movimientos_y_su_nombre_no_se_reutiliza(client, admin, conn):
+def test_eliminar_borra_la_fila_y_libera_el_nombre_de_usuario(client, admin, conn):
+    assert client.delete("/usuarios/3", headers=admin).status_code == 204
+    assert conn.execute("SELECT count(*) AS n FROM usuarios WHERE id = 3").fetchone()["n"] == 0
+    nuevo = {"nombre": "Nuevo Almacenista", "usuario": "almacen", "password": "clave12345", "rol": "ALMACENISTA"}
+    assert client.post("/usuarios", headers=admin, json=nuevo).status_code == 201
+    login = client.post("/auth/login", json={"usuario": "almacen", "password": "clave12345"})
+    assert login.status_code == 200
+    assert login.json()["usuario"]["nombre"] == "Nuevo Almacenista"
+
+
+def test_los_movimientos_del_usuario_eliminado_conservan_el_nombre_del_responsable(client, admin, conn):
     antes = conn.execute("SELECT count(*) AS n FROM movimientos WHERE usuario_id = 3").fetchone()["n"]
     assert antes > 0
     assert client.delete("/usuarios/3", headers=admin).status_code == 204
-    despues = conn.execute("SELECT count(*) AS n FROM movimientos WHERE usuario_id = 3").fetchone()["n"]
-    assert despues == antes
-    assert len(client.get("/movimientos", headers=admin).json()) == 15
+    movs = client.get("/movimientos", headers=admin).json()
+    assert len(movs) == 15
+    assert sum(1 for m in movs if m["usuario"] == "Almacenista Demo") == antes
+    assert conn.execute("SELECT count(*) AS n FROM movimientos WHERE usuario_id IS NULL").fetchone()["n"] == antes
+    # un usuario nuevo con el mismo nombre de usuario no hereda esos movimientos
     nuevo = {"nombre": "Otra Persona", "usuario": "almacen", "password": "clave12345", "rol": "ALMACENISTA"}
-    assert client.post("/usuarios", headers=admin, json=nuevo).status_code == 409
+    client.post("/usuarios", headers=admin, json=nuevo)
+    movs = client.get("/movimientos", headers=admin).json()
+    assert not any(m["usuario"] == "Otra Persona" for m in movs)

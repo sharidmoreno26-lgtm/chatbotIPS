@@ -122,13 +122,13 @@ Al iniciar sesión el backend entrega un token que incluye el rol. En cada petic
 
 El menú de la página se adapta al rol, pero la protección real está en el servidor: aunque alguien llame a la API directamente, recibe error 403 si su rol no corresponde.
 
-## Ingreso de medicamentos y baja de usuarios
+## Ingreso de medicamentos y eliminación de usuarios
 
 **Ingreso de medicamentos** (farmacia y almacenista, en *Movimientos → Ingreso de medicamentos*): se registra el medicamento (existente o nuevo), la cantidad, el número de lote, la fecha de vencimiento, la fecha de ingreso y el responsable, que es siempre quien tiene la sesión iniciada. Al guardar, el sistema suma la cantidad al inventario y deja el movimiento con su lote para poder rastrearlo. No se aceptan lotes ya vencidos, fechas de ingreso futuras ni datos incompletos.
 
 El medicamento conserva **una sola fecha de vencimiento: la más próxima** entre lo que ya tenía y el lote que ingresa. Límite conocido: el sistema no lleva la cantidad de cada lote por separado; las salidas no descuentan de un lote en particular.
 
-**Eliminar usuarios** (administrador, en *Usuarios*): antes de eliminar se pide confirmación. Eliminar es una *baja*: el usuario desaparece de la lista y ya no puede entrar, pero su registro se conserva para no perder la trazabilidad de los movimientos que hizo. No se puede eliminar el propio usuario y el nombre de usuario eliminado no se puede volver a usar.
+**Eliminar usuarios** (administrador, en *Usuarios*): antes de eliminar se pide confirmación. El usuario se borra de la base de datos: ya no puede entrar y su nombre de usuario queda libre para registrarlo de nuevo. Los movimientos que hizo se conservan y siguen mostrando su nombre como responsable. No se puede eliminar el propio usuario.
 
 Endpoints nuevos: `POST /ingresos` y `DELETE /usuarios/{id}`. `POST /movimientos` ahora solo registra salidas.
 

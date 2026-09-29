@@ -47,10 +47,9 @@ def medicamentos_proximos_a_vencer(conn, dias=DIAS_VENCIMIENTO):
 def listar_movimientos(conn, tipo=None):
     return conn.execute(
         """SELECT mv.id, mv.medicamento_id, m.nombre AS medicamento, mv.tipo, mv.cantidad,
-                  mv.fecha, u.nombre AS usuario, mv.lote, mv.fecha_vencimiento
+                  mv.fecha, mv.responsable AS usuario, mv.lote, mv.fecha_vencimiento
            FROM movimientos mv
            JOIN medicamentos m ON m.id = mv.medicamento_id
-           JOIN usuarios u ON u.id = mv.usuario_id
            WHERE (%s::text IS NULL OR mv.tipo = %s)
            ORDER BY mv.fecha DESC, mv.id DESC""",
         (tipo, tipo),
@@ -106,9 +105,9 @@ def registrar_movimiento(conn, med_id, tipo, cantidad, usuario_id):
         (cambio, med_id),
     ).fetchone()["cantidad_actual"]
     mov = conn.execute(
-        """INSERT INTO movimientos (medicamento_id, tipo, cantidad, usuario_id)
-           VALUES (%s, %s, %s, %s) RETURNING id""",
-        (med_id, tipo, cantidad, usuario_id),
+        """INSERT INTO movimientos (medicamento_id, tipo, cantidad, usuario_id, responsable)
+           VALUES (%s, %s, %s, %s, (SELECT nombre FROM usuarios WHERE id = %s)) RETURNING id""",
+        (med_id, tipo, cantidad, usuario_id, usuario_id),
     ).fetchone()
     return {"id": mov["id"], "cantidad_actual": nuevo}
 
@@ -149,9 +148,11 @@ def registrar_ingreso(
     if actualizado is None:
         raise LookupError("Medicamento no encontrado")
     movimiento = conn.execute(
-        """INSERT INTO movimientos (medicamento_id, tipo, cantidad, fecha, usuario_id, lote, fecha_vencimiento)
-           VALUES (%s, 'ENTRADA', %s, %s::date + localtime, %s, %s, %s) RETURNING id""",
-        (medicamento_id, cantidad, fecha_ingreso, usuario_id, lote, fecha_vencimiento),
+        """INSERT INTO movimientos (medicamento_id, tipo, cantidad, fecha, usuario_id, responsable,
+                                     lote, fecha_vencimiento)
+           VALUES (%s, 'ENTRADA', %s, %s::date + localtime, %s, (SELECT nombre FROM usuarios WHERE id = %s), %s, %s)
+           RETURNING id""",
+        (medicamento_id, cantidad, fecha_ingreso, usuario_id, usuario_id, lote, fecha_vencimiento),
     ).fetchone()
     return {
         "movimiento_id": movimiento["id"],

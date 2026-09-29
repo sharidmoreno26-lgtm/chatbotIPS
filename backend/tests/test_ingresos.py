@@ -182,3 +182,9 @@ def test_fecha_de_ingreso_de_hace_un_anio_se_acepta(client, farmacia, hoy):
     r = client.post("/ingresos", headers=farmacia,
                     json=cuerpo(hoy, fecha_ingreso=str(hoy - d(days=365)), fecha_vencimiento=str(hoy + d(days=10))))
     assert r.status_code == 201
+
+
+def test_el_ingreso_conserva_el_nombre_del_responsable_aunque_se_elimine_su_usuario(client, admin, farmacia, hoy):
+    client.post("/ingresos", headers=farmacia, json=cuerpo(hoy))
+    assert client.delete("/usuarios/2", headers=admin).status_code == 204
+    assert _movimiento_por_lote(client, admin, "L-2026-041")["usuario"] == "Responsable de Farmacia Demo"

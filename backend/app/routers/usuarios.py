@@ -52,11 +52,11 @@ def eliminar(
     conn=Depends(get_conn),
     actual=Depends(requiere_roles(ADMIN)),
 ):
-    """Baja lógica: el usuario queda INACTIVO para conservar la trazabilidad de sus movimientos."""
+    """Elimina el usuario. Sus movimientos se conservan con el nombre del responsable."""
     if usuario_id == actual["id"]:
         raise HTTPException(409, "No puedes eliminar tu propio usuario")
     fila = conn.execute(
-        "UPDATE usuarios SET estado = 'INACTIVO' WHERE id = %s AND estado = 'ACTIVO' RETURNING id",
+        "DELETE FROM usuarios WHERE id = %s RETURNING id",
         (usuario_id,),
     ).fetchone()
     if fila is None:

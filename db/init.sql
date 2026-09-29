@@ -39,7 +39,8 @@ CREATE TABLE movimientos (
     tipo VARCHAR(7) NOT NULL CHECK (tipo IN ('ENTRADA', 'SALIDA')),
     cantidad INT NOT NULL CHECK (cantidad > 0),
     fecha TIMESTAMP NOT NULL DEFAULT now(),
-    usuario_id INT NOT NULL REFERENCES usuarios(id),
+    usuario_id INT REFERENCES usuarios(id) ON DELETE SET NULL,
+    responsable VARCHAR(100) NOT NULL,
     lote VARCHAR(40),
     fecha_vencimiento DATE,
     CHECK (tipo = 'ENTRADA' OR (lote IS NULL AND fecha_vencimiento IS NULL))
@@ -70,26 +71,31 @@ INSERT INTO medicamentos (nombre, principio_activo, presentacion, cantidad_actua
 ('Enalapril',    'Enalapril',           'Tabletas 20 mg',     45,  30, CURRENT_DATE + 180, 'Estante D1'),
 ('Suero Oral',   'Sales de rehidratación', 'Sobre',          100,  60, CURRENT_DATE + 45,  'Estante D2');
 
--- (medicamento, tipo, cantidad, día relativo al inicio del mes, usuario)
+-- (medicamento, tipo, cantidad, día relativo al inicio del mes, usuario, lote)
 -- Mes actual: 5 entradas y 7 salidas. Acetaminofén tiene 3 movimientos (el mayor).
 -- Mes anterior (día negativo): 2 entradas y 1 salida, que NO deben contarse en "este mes".
-INSERT INTO movimientos (medicamento_id, tipo, cantidad, fecha, usuario_id)
+-- Las entradas llevan lote y vencimiento (el del medicamento); las salidas no se asignan a un lote.
+INSERT INTO movimientos (medicamento_id, tipo, cantidad, fecha, usuario_id, responsable, lote, fecha_vencimiento)
 SELECT v.med, v.tipo, v.cant,
-       LEAST((date_trunc('month', CURRENT_DATE)::date + v.dia) + time '09:00', date_trunc('minute', localtimestamp)), v.usr
+       LEAST((date_trunc('month', CURRENT_DATE)::date + v.dia) + time '09:00', date_trunc('minute', localtimestamp)),
+       v.usr,
+       (SELECT nombre FROM usuarios WHERE id = v.usr),
+       v.lote,
+       CASE WHEN v.tipo = 'ENTRADA' THEN (SELECT fecha_vencimiento FROM medicamentos WHERE id = v.med) END
 FROM (VALUES
-    (1, 'ENTRADA', 100,  2, 3),
-    (1, 'SALIDA',   85,  5, 2),
-    (1, 'SALIDA',   30,  9, 2),
-    (2, 'ENTRADA',  50,  3, 3),
-    (2, 'SALIDA',   42,  8, 2),
-    (3, 'SALIDA',   18,  6, 2),
-    (4, 'ENTRADA',  60,  4, 3),
-    (4, 'SALIDA',   20, 10, 2),
-    (5, 'ENTRADA',  20,  7, 3),
-    (5, 'SALIDA',    5, 11, 2),
-    (6, 'SALIDA',   40, 12, 2),
-    (7, 'ENTRADA', 100, 13, 3),
-    (1, 'ENTRADA', 200, -5, 3),
-    (1, 'SALIDA',   60, -3, 2),
-    (5, 'ENTRADA',  15, -10, 3)
-) AS v(med, tipo, cant, dia, usr);
+    (1, 'ENTRADA', 100,  2, 3, 'L-2026-001'),
+    (1, 'SALIDA',   85,  5, 2, NULL),
+    (1, 'SALIDA',   30,  9, 2, NULL),
+    (2, 'ENTRADA',  50,  3, 3, 'L-2026-002'),
+    (2, 'SALIDA',   42,  8, 2, NULL),
+    (3, 'SALIDA',   18,  6, 2, NULL),
+    (4, 'ENTRADA',  60,  4, 3, 'L-2026-003'),
+    (4, 'SALIDA',   20, 10, 2, NULL),
+    (5, 'ENTRADA',  20,  7, 3, 'L-2026-004'),
+    (5, 'SALIDA',    5, 11, 2, NULL),
+    (6, 'SALIDA',   40, 12, 2, NULL),
+    (7, 'ENTRADA', 100, 13, 3, 'L-2026-005'),
+    (1, 'ENTRADA', 200, -5, 3, 'L-2026-006'),
+    (1, 'SALIDA',   60, -3, 2, NULL),
+    (5, 'ENTRADA',  15, -10, 3, 'L-2026-007')
+) AS v(med, tipo, cant, dia, usr, lote);

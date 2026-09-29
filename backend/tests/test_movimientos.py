@@ -2,15 +2,22 @@ def _stock(client, cab, med_id):
     return client.get(f"/medicamentos/{med_id}/inventario", headers=cab).json()["cantidad_actual"]
 
 
-def test_lista_movimientos_con_lote_y_vencimiento_nulos_en_el_seed(client, admin):
+def test_lista_movimientos_las_entradas_del_seed_traen_lote_y_vencimiento(client, admin):
     todos = client.get("/movimientos", headers=admin).json()
     assert len(todos) == 15
-    assert all("lote" in m and "fecha_vencimiento" in m for m in todos)
-    assert all(m["lote"] is None and m["fecha_vencimiento"] is None for m in todos)
     entradas = client.get("/movimientos/entradas", headers=admin).json()
     salidas = client.get("/movimientos/salidas", headers=admin).json()
     assert len(entradas) == 7 and all(m["tipo"] == "ENTRADA" for m in entradas)
+    assert all(m["lote"] and m["fecha_vencimiento"] for m in entradas)
+    assert len({m["lote"] for m in entradas}) == 7
     assert len(salidas) == 8 and all(m["tipo"] == "SALIDA" for m in salidas)
+    assert all(m["lote"] is None and m["fecha_vencimiento"] is None for m in salidas)
+
+
+def test_el_vencimiento_del_lote_del_seed_coincide_con_el_del_medicamento(client, admin):
+    meds = {m["id"]: m["fecha_vencimiento"] for m in client.get("/medicamentos", headers=admin).json()}
+    for m in client.get("/movimientos/entradas", headers=admin).json():
+        assert m["fecha_vencimiento"] == meds[m["medicamento_id"]]
 
 
 def test_registrar_salida_actualiza_stock(client, farmacia):

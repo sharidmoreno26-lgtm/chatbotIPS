@@ -19,7 +19,7 @@ Dos funciones nuevas sobre el MVP existente, sin alterar lo que ya funciona:
 ## 2. Decisiones acordadas
 
 **Eliminar usuarios**
-1. "Eliminar" es una **baja**: `estado` pasa a `INACTIVO`. El usuario desaparece del listado y no puede iniciar sesión, pero su registro se conserva para no dejar movimientos sin responsable. El nombre de usuario sigue ocupado.
+1. "Eliminar" **borra el usuario de la base de datos** (cambio posterior a la primera versión, que era una baja lógica y impedía reutilizar el nombre de usuario). Cada movimiento guarda el **nombre del responsable** al momento de registrarse (`movimientos.responsable`) y `movimientos.usuario_id` pasa a `NULL` al borrar el usuario (`ON DELETE SET NULL`), así el historial conserva quién fue. El nombre de usuario queda libre.
 2. El administrador **no puede eliminarse a sí mismo**. Como quien elimina siempre es un administrador activo, esto garantiza que nunca queden cero administradores (no hace falta una regla aparte para "el último administrador").
 3. La confirmación usa el cuadro de diálogo del navegador (`confirm`) con el texto exacto.
 
@@ -35,7 +35,7 @@ Dos funciones nuevas sobre el MVP existente, sin alterar lo que ya funciona:
 
 `db/init.sql` (se recrea con DROP/CREATE, sin migraciones):
 
-- `movimientos` gana `lote VARCHAR(40) NULL` y `fecha_vencimiento DATE NULL`, con `CHECK (tipo = 'ENTRADA' OR (lote IS NULL AND fecha_vencimiento IS NULL))`. Las entradas del seed quedan sin lote.
+- `movimientos` gana `responsable VARCHAR(100) NOT NULL` (nombre del responsable al registrar), `usuario_id` pasa a admitir `NULL` con `ON DELETE SET NULL`, y además `lote VARCHAR(40) NULL` y `fecha_vencimiento DATE NULL`, con `CHECK (tipo = 'ENTRADA' OR (lote IS NULL AND fecha_vencimiento IS NULL))`. Las entradas del seed llevan lote (`L-2026-001`…) y el vencimiento del medicamento; las salidas quedan sin lote.
 - `medicamentos` y `usuarios` no cambian de estructura.
 
 ## 4. API
@@ -43,7 +43,7 @@ Dos funciones nuevas sobre el MVP existente, sin alterar lo que ya funciona:
 Todos los endpoints exigen token; el rol se valida en el backend.
 
 **`DELETE /usuarios/{id}`** (solo ADMINISTRADOR) → 204.
-- 404 si no existe o ya está `INACTIVO`; 409 si `id` es el del usuario que llama.
+- 404 si no existe; 409 si `id` es el del usuario que llama.
 - `GET /usuarios` pasa a listar **solo usuarios `ACTIVO`**.
 
 **`POST /ingresos`** (FARMACIA, ALMACENISTA) → 201.
@@ -80,7 +80,7 @@ Validaciones (422 salvo indicación):
 
 ## 6. Pruebas
 
-- Backend (`pytest`, BD real): baja de usuario (204, desaparece del listado, no puede iniciar sesión, 404 repetido, 409 a sí mismo, 403 a otros roles); ingreso (stock sube, movimiento con lote/vencimiento/responsable del token, regla de vencimiento en sus tres casos, medicamento nuevo, atomicidad ante error, todas las validaciones y los 403/404/409 anteriores); `POST /movimientos` rechaza `ENTRADA`.
+- Backend (`pytest`, BD real): eliminación de usuario (204, la fila desaparece, no puede iniciar sesión, el nombre de usuario se puede reutilizar, sus movimientos conservan el nombre del responsable, 404 repetido, 409 a sí mismo, 403 a otros roles); ingreso (stock sube, movimiento con lote/vencimiento/responsable del token, regla de vencimiento en sus tres casos, medicamento nuevo, atomicidad ante error, todas las validaciones y los 403/404/409 anteriores); `POST /movimientos` rechaza `ENTRADA`.
 - Se ajustan los tests actuales que registraban entradas por `POST /movimientos` para usar `POST /ingresos`.
 - Prueba de humo y las 15 preguntas: sin cambios y deben seguir en verde.
 - Frontend: recorrido manual (lista de comprobación en el plan).
