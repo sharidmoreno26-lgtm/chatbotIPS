@@ -1,6 +1,6 @@
 # Baja de usuarios e ingreso de medicamentos — Diseño
 
-Fecha: 2026-09-29 · Origen: `promptChatBotIpsUsuarios.md` · Extiende: `2026-09-29-chatbot-ips-design.md` · Estado: pendiente de revisión
+Fecha: 2026-09-29 · Origen: `prompts/promptChatBotIpsUsuarios.md` · Extiende: `2026-09-29-chatbot-ips-design.md` · Estado: pendiente de revisión
 
 ## 1. Propósito y criterios de éxito
 

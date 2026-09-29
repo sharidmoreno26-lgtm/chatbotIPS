@@ -1,6 +1,6 @@
 # MVP Chatbot IPS — Diseño
 
-Fecha: 2026-09-29 · Origen: `promptIPS.md` · Estado: pendiente de revisión
+Fecha: 2026-09-29 · Origen: `prompts/promptIPS.md` · Estado: pendiente de revisión
 
 ## 1. Propósito y criterios de éxito
 

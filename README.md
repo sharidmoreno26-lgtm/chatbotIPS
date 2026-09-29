@@ -37,6 +37,7 @@ backend/tests/     Pruebas automáticas
 frontend/          Página web y configuración de nginx
 scripts/smoke.py   Prueba rápida con las 15 preguntas
 docs/superpowers/  Diseño y plan de implementación
+prompts/           Prompts originales con los requerimientos del proyecto
 ```
 
 ## Cómo instalarlo
