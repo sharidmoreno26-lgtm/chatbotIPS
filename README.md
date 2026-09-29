@@ -2,7 +2,7 @@
 
 Asistente virtual para una IPS (centro de salud) que responde preguntas sobre medicamentos, inventario, movimientos, vencimientos y ubicaciones, según el rol de quien pregunta. Proyecto universitario de Administración en Salud. **Todos los datos son ficticios.**
 
-> Guía paso a paso para encender el proyecto, actualizar los datos de ejemplo y hacer la demostración: **[MANUAL_USUARIO.md](MANUAL_USUARIO.md)**.
+> Guía paso a paso para encender el proyecto, actualizar los datos de ejemplo y hacer la demostración: **[docs/MANUAL_USUARIO.md](docs/MANUAL_USUARIO.md)**.
 
 ## Objetivo
 
@@ -36,7 +36,7 @@ backend/app/       Código del servidor (API, login, chatbot)
 backend/tests/     Pruebas automáticas
 frontend/          Página web y configuración de nginx
 scripts/smoke.py   Prueba rápida con las 15 preguntas
-docs/superpowers/  Diseño y plan de implementación
+docs/              Manual de usuario, diseños y planes de implementación
 prompts/           Prompts originales con los requerimientos del proyecto
 ```
 
