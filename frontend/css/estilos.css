@@ -73,3 +73,12 @@ th { background: #e6f0fa; color: var(--azul-oscuro); font-size: .85rem; }
   #menu { flex-direction: row; flex-wrap: wrap; border-right: 0; border-bottom: 1px solid var(--borde); }
   .burbuja { max-width: 95%; }
 }
+
+.boton-peligro { background: var(--alerta); padding: 6px 12px; }
+.boton-peligro:hover { background: #962d22; }
+.boton-secundario { background: #fff; color: var(--azul); border: 1px solid var(--azul); }
+.boton-secundario:hover, .boton-secundario.activo { background: var(--azul); color: #fff; }
+.acciones-movimiento { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 16px; }
+.bloque-nuevo { grid-column: 1 / -1; display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; padding: 12px; border: 1px dashed var(--borde); border-radius: 8px; }
+.bloque-nuevo[hidden] { display: none; }
+input[readonly] { background: #eef3f8; }
