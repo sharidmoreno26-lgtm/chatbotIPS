@@ -165,3 +165,20 @@ def test_el_ingreso_se_refleja_en_el_chatbot(client, almacen, farmacia, hoy):
     r = client.post("/chat", headers=farmacia,
                     json={"mensaje": "¿Cuántas unidades hay disponibles de acetaminofén?"})
     assert "22 unidades disponibles" in r.json()["respuesta"]
+
+
+def test_fecha_de_ingreso_muy_antigua_da_422(client, farmacia, conn, hoy):
+    d = dt.timedelta
+    for antigua in (hoy - d(days=400), dt.date(26, 9, 29)):  # más de un año atrás / año 0026 por error de digitación
+        r = client.post("/ingresos", headers=farmacia,
+                        json=cuerpo(hoy, fecha_ingreso=str(antigua), fecha_vencimiento=str(hoy + d(days=10))))
+        assert r.status_code == 422, antigua
+        assert isinstance(r.json()["detail"], str)
+    assert conn.execute("SELECT count(*) AS n FROM movimientos").fetchone()["n"] == 15
+
+
+def test_fecha_de_ingreso_de_hace_un_anio_se_acepta(client, farmacia, hoy):
+    d = dt.timedelta
+    r = client.post("/ingresos", headers=farmacia,
+                    json=cuerpo(hoy, fecha_ingreso=str(hoy - d(days=365)), fecha_vencimiento=str(hoy + d(days=10))))
+    assert r.status_code == 201

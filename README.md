@@ -143,6 +143,8 @@ Si cambiaste `FRONTEND_PORT`, el script necesita la URL, por ejemplo: `python3 s
 
 ## Antes de la demo: reiniciar los datos
 
+**Después de actualizar el código** (por ejemplo, con `git pull`) reinicie también los datos: el esquema de la base cambia y la base guardada del equipo no se actualiza sola. Sin esto, la pantalla *Movimientos* muestra "Error del servidor".
+
 Las fechas de los datos de ejemplo son relativas al día en que se ejecuta `init.sql`, y el volumen de la base de datos persiste. Con el tiempo los datos de demostración quedan desactualizados. Para reiniciarlos:
 
 ```bash

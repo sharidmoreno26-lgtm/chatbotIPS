@@ -66,7 +66,7 @@ Cuerpo:
 Validaciones (422 salvo indicación):
 - `cantidad`: entero, 1 a 100000.
 - `lote`: 1 a 40 caracteres tras quitar espacios; solo letras, dígitos y `. _ / -`.
-- `fecha_vencimiento` posterior a `fecha_ingreso` y no anterior a hoy (no se ingresan lotes ya vencidos); `fecha_ingreso` no futura.
+- `fecha_vencimiento` posterior a `fecha_ingreso` y no anterior a hoy (no se ingresan lotes ya vencidos); `fecha_ingreso` no futura ni anterior a un año (evita errores de digitación como un año equivocado).
 - `nuevo_medicamento`: `nombre` ≤ 80, `principio_activo` ≤ 80, `presentacion` ≤ 60, `ubicacion` ≤ 60, todos no vacíos y sin NUL; `stock_minimo` entero 0 a 100000. Nombre repetido (sin distinguir mayúsculas, incluyendo inactivos; lo garantiza un índice único en la BD) → 409.
 - Ambos o ninguno de `medicamento_id`/`nuevo_medicamento` → 422; `medicamento_id` inexistente → 404.
 

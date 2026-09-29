@@ -57,3 +57,10 @@ def test_me_devuelve_el_usuario(client, almacen):
 def test_login_con_caracter_nul_da_422(client):
     r = client.post("/auth/login", json={"usuario": "ad\u0000min", "password": "demo1234"})
     assert r.status_code == 422
+
+
+def test_surrogate_solitario_en_el_cuerpo_da_422_y_no_500(client):
+    # JSON con el escape \ud83d (surrogate suelto): el servidor no debe fallar al devolver el error
+    cuerpo = '{"usuario": "Zz\\ud83d", "password": "x"}'
+    r = client.post("/auth/login", content=cuerpo, headers={"Content-Type": "application/json"})
+    assert r.status_code in (401, 422)

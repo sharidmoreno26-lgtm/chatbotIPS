@@ -69,8 +69,9 @@ async function vistaVencimientos() {
 
 let avisoMovimientos = "";
 
-function hoyISO() {
+function hoyISO(desfaseDias = 0) {
   const d = new Date();
+  d.setDate(d.getDate() + desfaseDias);
   return new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 10);
 }
 
@@ -139,7 +140,7 @@ function formularioIngreso(meds, usuario) {
   });
   const hoy = hoyISO();
   const vencimiento = el("input", { type: "date", required: "", min: hoy });
-  const ingreso = el("input", { type: "date", required: "", max: hoy, value: hoy });
+  const ingreso = el("input", { type: "date", required: "", min: hoyISO(-365), max: hoy, value: hoy });
   const responsable = el("input", { readonly: "", value: usuario.nombre });
   const mensaje = el("p", { class: "error", role: "status" });
   const boton = el("button", { class: "boton", type: "submit" }, "Guardar ingreso");

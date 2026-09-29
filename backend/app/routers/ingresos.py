@@ -1,4 +1,4 @@
-from datetime import date
+from datetime import date, timedelta
 
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, ConfigDict, Field
@@ -47,6 +47,8 @@ def registrar(
     hoy = conn.execute("SELECT CURRENT_DATE AS hoy").fetchone()["hoy"]
     if datos.fecha_ingreso > hoy:
         raise HTTPException(422, "La fecha de ingreso no puede ser futura")
+    if datos.fecha_ingreso < hoy - timedelta(days=365):
+        raise HTTPException(422, "La fecha de ingreso no puede ser anterior a un año")
     if datos.fecha_vencimiento < hoy:
         raise HTTPException(422, "El lote ya está vencido")
     nuevo = datos.nuevo_medicamento.model_dump() if datos.nuevo_medicamento else None
