@@ -2,6 +2,8 @@
 
 Asistente virtual para una IPS (centro de salud) que responde preguntas sobre medicamentos, inventario, movimientos, vencimientos y ubicaciones, según el rol de quien pregunta. Proyecto universitario de Administración en Salud. **Todos los datos son ficticios.**
 
+> Guía paso a paso para encender el proyecto, actualizar los datos de ejemplo y hacer la demostración: **[MANUAL_USUARIO.md](MANUAL_USUARIO.md)**.
+
 ## Objetivo
 
 Demostrar el flujo completo: **Usuario → Chatbot → Backend → Base de datos relacional → Respuesta**.
