@@ -1,0 +1,129 @@
+# Chatbot IPS — MVP académico
+
+Asistente virtual para una IPS (centro de salud) que responde preguntas sobre medicamentos, inventario, movimientos, vencimientos y ubicaciones, según el rol de quien pregunta. Proyecto universitario de Administración en Salud. **Todos los datos son ficticios.**
+
+## Objetivo
+
+Demostrar el flujo completo: **Usuario → Chatbot → Backend → Base de datos relacional → Respuesta**.
+
+## Arquitectura
+
+```
+Navegador ──▶ nginx (frontend, puerto 80) ──/api──▶ FastAPI (backend) ──▶ PostgreSQL
+```
+
+Son tres contenedores que se levantan con Docker Compose. nginx sirve la página y reenvía las peticiones `/api` al backend, que consulta la base de datos.
+
+## Tecnologías
+
+| Parte | Tecnología |
+|---|---|
+| Página web | HTML, CSS y JavaScript (sin frameworks) |
+| Backend | Python + FastAPI |
+| Base de datos | PostgreSQL |
+| Contenedores | Docker + Docker Compose |
+| Seguridad | Contraseñas con bcrypt, sesión con token JWT |
+
+Todo es gratuito y corre en su computador.
+
+## Estructura del proyecto
+
+```
+db/init.sql        Tablas y datos ficticios
+backend/app/       Código del servidor (API, login, chatbot)
+backend/tests/     Pruebas automáticas
+frontend/          Página web y configuración de nginx
+scripts/smoke.py   Prueba rápida con las 15 preguntas
+docs/superpowers/  Diseño y plan de implementación
+```
+
+## Cómo instalarlo
+
+1. Instale **Docker Desktop** (incluye Docker Compose) y ábralo.
+2. Copie el archivo de configuración: `cp .env.example .env` (puede cambiar las claves si quiere).
+
+## Cómo ejecutarlo
+
+```bash
+docker compose up --build
+```
+
+Abra **http://localhost** en el navegador. La documentación técnica interactiva de la API está en **http://localhost/api/docs**.
+
+Para apagar: `Ctrl+C` y luego `docker compose down`. Para borrar los datos y empezar de cero: `docker compose down -v`.
+
+Si el puerto 80 está ocupado, cambie `FRONTEND_PORT` en `.env` (por ejemplo `8080`) y abra `http://localhost:8080`.
+
+## Usuarios de prueba
+
+| Usuario | Contraseña | Rol |
+|---|---|---|
+| `admin` | `demo1234` | Administrador del sistema |
+| `farmacia` | `demo1234` | Responsable de farmacia |
+| `almacen` | `demo1234` | Almacenista |
+
+## Ejemplos de preguntas y respuestas
+
+**Administrador**
+- ¿Cuántos medicamentos tenemos registrados actualmente? → *Actualmente hay 12 medicamentos registrados en el sistema.*
+- ¿Cuáles son los medicamentos que están por debajo del mínimo establecido? → lista con Acetaminofén, Amoxicilina y Losartán.
+- ¿Qué medicamentos están próximos a vencer durante los próximos 30 días?
+- ¿Cuántas entradas y salidas de medicamentos se registraron durante este mes?
+- ¿Qué medicamento tiene mayor movimiento durante este mes?
+
+**Responsable de farmacia**
+- ¿Cuántas unidades hay disponibles de acetaminofén? → *Actualmente hay 15 unidades disponibles de Acetaminofén.*
+- ¿Cuántas unidades de acetaminofén ingresaron durante este mes? / ¿…salieron durante este mes?
+- ¿Qué medicamentos están próximos a vencer?
+
+**Almacenista**
+- ¿Dónde está ubicada la insulina? → *Insulina se encuentra en: Nevera 1.*
+- ¿Cuándo fue registrada la última entrada de acetaminofén?
+- ¿Qué medicamentos debo revisar por vencimiento?
+
+Si el chatbot no entiende, responde: *"No pude identificar tu consulta. Puedes preguntarme sobre inventario, medicamentos, movimientos, vencimientos o ubicaciones."* y no inventa datos. Si pregunta algo que no corresponde a su rol: *"Esa consulta no está disponible para tu rol."*
+
+Limitación conocida: el chatbot no entiende rangos de fechas libres (por ejemplo "esta semana"); trabaja con "este mes" y "próximos 30 días".
+
+## Cómo funciona la conexión con la base de datos
+
+1. El backend abre una conexión a PostgreSQL en cada petición (datos de conexión en `.env`).
+2. Todas las consultas están en `backend/app/consultas.py` y usan parámetros (`%s`), nunca texto pegado, para evitar inyección SQL.
+3. El chatbot y los endpoints REST usan las mismas consultas, así que siempre dan los mismos resultados.
+4. Al registrar un movimiento, el sistema actualiza el inventario y guarda el movimiento en la misma transacción; no permite dejar el stock en negativo.
+
+Tablas: `roles`, `usuarios`, `medicamentos`, `movimientos` y `servicios`.
+
+## Cómo funciona el chatbot
+
+1. Limpia el texto (minúsculas, sin tildes ni signos).
+2. Busca si menciona un medicamento de la base de datos.
+3. Detecta la intención con palabras clave (por ejemplo "cuánto / cantidad / queda / hay" + un medicamento = consultar inventario). Distintas formas de preguntar llegan a la misma consulta.
+4. Verifica que el rol tenga permiso para esa intención.
+5. Consulta la base de datos y redacta la respuesta.
+
+La lógica está separada en `backend/app/chatbot/`, de modo que en el futuro se pueda cambiar por un modelo de IA local sin tocar el resto.
+
+## Cómo funciona el sistema de roles
+
+Al iniciar sesión el backend entrega un token que incluye el rol. En cada petición se revisa el token y se consulta al usuario en la base de datos (si fue desactivado, se rechaza).
+
+| Consulta | Administrador | Farmacia | Almacenista |
+|---|---|---|---|
+| Total de medicamentos, movimientos del mes, mayor movimiento | ✅ | | |
+| Bajo el mínimo | ✅ | ✅ | |
+| Próximos a vencer / revisar por vencimiento | ✅ | ✅ | ✅ |
+| Unidades disponibles de un medicamento | ✅ | ✅ | ✅ |
+| Entradas y salidas del mes de un medicamento | | ✅ | |
+| Ubicación, última entrada, última salida | | | ✅ |
+| Registrar entradas/salidas (formulario) | | ✅ | ✅ |
+| Crear y ver usuarios | ✅ | | |
+
+El menú de la página se adapta al rol, pero la protección real está en el servidor: aunque alguien llame a la API directamente, recibe error 403 si su rol no corresponde.
+
+## Pruebas
+
+```bash
+docker compose run --rm backend pytest -q   # pruebas automáticas (restauran los datos de demostración)
+python3 scripts/smoke.py                    # las 15 preguntas de punta a punta
+```
