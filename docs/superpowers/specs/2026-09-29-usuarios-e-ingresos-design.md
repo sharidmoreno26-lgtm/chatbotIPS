@@ -66,11 +66,11 @@ Cuerpo:
 Validaciones (422 salvo indicación):
 - `cantidad`: entero, 1 a 100000.
 - `lote`: 1 a 40 caracteres tras quitar espacios; solo letras, dígitos y `. _ / -`.
-- `fecha_vencimiento` posterior a `fecha_ingreso`; `fecha_ingreso` no futura.
-- `nuevo_medicamento`: `nombre` ≤ 80, `principio_activo` ≤ 80, `presentacion` ≤ 60, `ubicacion` ≤ 60, todos no vacíos y sin NUL; `stock_minimo` entero 0 a 100000. Nombre repetido (sin distinguir mayúsculas, incluyendo inactivos) → 409.
+- `fecha_vencimiento` posterior a `fecha_ingreso` y no anterior a hoy (no se ingresan lotes ya vencidos); `fecha_ingreso` no futura.
+- `nuevo_medicamento`: `nombre` ≤ 80, `principio_activo` ≤ 80, `presentacion` ≤ 60, `ubicacion` ≤ 60, todos no vacíos y sin NUL; `stock_minimo` entero 0 a 100000. Nombre repetido (sin distinguir mayúsculas, incluyendo inactivos; lo garantiza un índice único en la BD) → 409.
 - Ambos o ninguno de `medicamento_id`/`nuevo_medicamento` → 422; `medicamento_id` inexistente → 404.
 
-**`POST /movimientos`** acepta solo `SALIDA` (`tipo: "ENTRADA"` → 422). `GET /movimientos*` y `GET /medicamentos/proximos-vencer` devuelven además `lote` y `fecha_vencimiento` por movimiento (nulos en entradas antiguas y en salidas).
+**`POST /movimientos`** acepta solo `SALIDA` (`tipo: "ENTRADA"` → 422). `GET /movimientos`, `/movimientos/entradas` y `/movimientos/salidas` devuelven además `lote` y `fecha_vencimiento` por movimiento (nulos en entradas antiguas y en salidas).
 
 ## 5. Frontend
 
