@@ -31,13 +31,18 @@ CREATE TABLE medicamentos (
     estado VARCHAR(10) NOT NULL DEFAULT 'ACTIVO' CHECK (estado IN ('ACTIVO', 'INACTIVO'))
 );
 
+CREATE UNIQUE INDEX ux_medicamentos_nombre ON medicamentos (lower(nombre));
+
 CREATE TABLE movimientos (
     id SERIAL PRIMARY KEY,
     medicamento_id INT NOT NULL REFERENCES medicamentos(id),
     tipo VARCHAR(7) NOT NULL CHECK (tipo IN ('ENTRADA', 'SALIDA')),
     cantidad INT NOT NULL CHECK (cantidad > 0),
     fecha TIMESTAMP NOT NULL DEFAULT now(),
-    usuario_id INT NOT NULL REFERENCES usuarios(id)
+    usuario_id INT NOT NULL REFERENCES usuarios(id),
+    lote VARCHAR(40),
+    fecha_vencimiento DATE,
+    CHECK (tipo = 'ENTRADA' OR (lote IS NULL AND fecha_vencimiento IS NULL))
 );
 CREATE INDEX idx_movimientos_medicamento_fecha ON movimientos (medicamento_id, fecha);
 

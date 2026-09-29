@@ -13,7 +13,7 @@ router = APIRouter(prefix="/movimientos", tags=["movimientos"])
 
 class MovimientoNuevo(BaseModel):
     medicamento_id: int = Field(gt=0)
-    tipo: Literal["ENTRADA", "SALIDA"]
+    tipo: Literal["SALIDA"]
     cantidad: int = Field(gt=0, le=100000)
 
 

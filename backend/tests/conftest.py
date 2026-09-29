@@ -63,3 +63,9 @@ def fecha_mes(conn):
         return fila["f"]
 
     return _fecha
+
+
+@pytest.fixture
+def hoy(conn):
+    """Fecha de hoy según la base de datos (zona America/Bogota)."""
+    return conn.execute("SELECT CURRENT_DATE AS hoy").fetchone()["hoy"]

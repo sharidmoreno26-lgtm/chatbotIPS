@@ -1,3 +1,5 @@
+from psycopg.errors import UniqueViolation
+
 DIAS_VENCIMIENTO = 30
 
 _COLUMNAS_MED = """id, nombre, principio_activo, presentacion, cantidad_actual, stock_minimo,
@@ -45,7 +47,7 @@ def medicamentos_proximos_a_vencer(conn, dias=DIAS_VENCIMIENTO):
 def listar_movimientos(conn, tipo=None):
     return conn.execute(
         """SELECT mv.id, mv.medicamento_id, m.nombre AS medicamento, mv.tipo, mv.cantidad,
-                  mv.fecha, u.nombre AS usuario
+                  mv.fecha, u.nombre AS usuario, mv.lote, mv.fecha_vencimiento
            FROM movimientos mv
            JOIN medicamentos m ON m.id = mv.medicamento_id
            JOIN usuarios u ON u.id = mv.usuario_id
@@ -109,3 +111,51 @@ def registrar_movimiento(conn, med_id, tipo, cantidad, usuario_id):
         (med_id, tipo, cantidad, usuario_id),
     ).fetchone()
     return {"id": mov["id"], "cantidad_actual": nuevo}
+
+
+def registrar_ingreso(
+    conn, usuario_id, cantidad, lote, fecha_vencimiento, fecha_ingreso, medicamento_id=None, nuevo=None
+):
+    """Registra un ingreso (ENTRADA con lote) y actualiza stock y vencimiento. No hace commit.
+
+    Lanza LookupError si el medicamento no existe y ValueError si el nombre nuevo ya existe.
+    """
+    if nuevo is not None:
+        try:
+            medicamento_id = conn.execute(
+                """INSERT INTO medicamentos (nombre, principio_activo, presentacion, cantidad_actual,
+                                             stock_minimo, fecha_vencimiento, ubicacion)
+                   VALUES (%s, %s, %s, 0, %s, %s, %s) RETURNING id""",
+                (
+                    nuevo["nombre"],
+                    nuevo["principio_activo"],
+                    nuevo["presentacion"],
+                    nuevo["stock_minimo"],
+                    fecha_vencimiento,
+                    nuevo["ubicacion"],
+                ),
+            ).fetchone()["id"]
+        except UniqueViolation:
+            raise ValueError("Ya existe un medicamento con ese nombre")
+    actualizado = conn.execute(
+        """UPDATE medicamentos
+           SET cantidad_actual = cantidad_actual + %s,
+               fecha_vencimiento = CASE WHEN fecha_vencimiento < CURRENT_DATE THEN %s
+                                        ELSE LEAST(fecha_vencimiento, %s) END
+           WHERE id = %s AND estado = 'ACTIVO'
+           RETURNING cantidad_actual, fecha_vencimiento""",
+        (cantidad, fecha_vencimiento, fecha_vencimiento, medicamento_id),
+    ).fetchone()
+    if actualizado is None:
+        raise LookupError("Medicamento no encontrado")
+    movimiento = conn.execute(
+        """INSERT INTO movimientos (medicamento_id, tipo, cantidad, fecha, usuario_id, lote, fecha_vencimiento)
+           VALUES (%s, 'ENTRADA', %s, %s::date + localtime, %s, %s, %s) RETURNING id""",
+        (medicamento_id, cantidad, fecha_ingreso, usuario_id, lote, fecha_vencimiento),
+    ).fetchone()
+    return {
+        "movimiento_id": movimiento["id"],
+        "medicamento_id": medicamento_id,
+        "cantidad_actual": actualizado["cantidad_actual"],
+        "fecha_vencimiento": actualizado["fecha_vencimiento"],
+    }
