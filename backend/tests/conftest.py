@@ -10,11 +10,22 @@ DATABASE_URL = os.environ["DATABASE_URL"]
 INIT_SQL = Path(os.getenv("INIT_SQL", "/db/init.sql"))
 
 
+def _restaurar_bd():
+    with psycopg.connect(DATABASE_URL, autocommit=True) as c:
+        c.execute(INIT_SQL.read_text(encoding="utf-8"))
+
+
 @pytest.fixture(autouse=True)
 def bd_limpia():
     """Restaura la BD con los datos ficticios antes de cada prueba."""
-    with psycopg.connect(DATABASE_URL, autocommit=True) as c:
-        c.execute(INIT_SQL.read_text(encoding="utf-8"))
+    _restaurar_bd()
+
+
+@pytest.fixture(scope="session", autouse=True)
+def bd_limpia_al_terminar():
+    """Deja la BD de la demo intacta al terminar (algunas pruebas eliminan usuarios)."""
+    yield
+    _restaurar_bd()
 
 
 @pytest.fixture
