@@ -1,6 +1,6 @@
 from typing import Literal
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Path
 from pydantic import BaseModel, Field, field_validator
 
 from ..auth import hashear_password, requiere_roles
@@ -28,7 +28,8 @@ class UsuarioNuevo(BaseModel):
 def listar(conn=Depends(get_conn), usuario=Depends(requiere_roles(ADMIN))):
     return conn.execute(
         """SELECT u.id, u.nombre, u.usuario, r.nombre AS rol, u.estado
-           FROM usuarios u JOIN roles r ON r.id = u.rol_id ORDER BY u.id"""
+           FROM usuarios u JOIN roles r ON r.id = u.rol_id
+           WHERE u.estado = 'ACTIVO' ORDER BY u.id"""
     ).fetchall()
 
 
@@ -43,3 +44,21 @@ def crear(datos: UsuarioNuevo, conn=Depends(get_conn), usuario=Depends(requiere_
     ).fetchone()
     conn.commit()
     return {"id": fila["id"]}
+
+
+@router.delete("/{usuario_id}", status_code=204)
+def eliminar(
+    usuario_id: int = Path(gt=0),
+    conn=Depends(get_conn),
+    actual=Depends(requiere_roles(ADMIN)),
+):
+    """Baja lógica: el usuario queda INACTIVO para conservar la trazabilidad de sus movimientos."""
+    if usuario_id == actual["id"]:
+        raise HTTPException(409, "No puedes eliminar tu propio usuario")
+    fila = conn.execute(
+        "UPDATE usuarios SET estado = 'INACTIVO' WHERE id = %s AND estado = 'ACTIVO' RETURNING id",
+        (usuario_id,),
+    ).fetchone()
+    if fila is None:
+        raise HTTPException(404, "Usuario no encontrado")
+    conn.commit()
