@@ -135,7 +135,7 @@ Si cambiaste `FRONTEND_PORT`, el script necesita la URL, por ejemplo: `python3 s
 Las fechas de los datos de ejemplo son relativas al día en que se ejecuta `init.sql`, y el volumen de la base de datos persiste. Con el tiempo los datos de demostración quedan desactualizados. Para reiniciarlos:
 
 ```bash
-docker compose exec -T db sh -c 'psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -f /docker-entrypoint-initdb.d/init.sql'
+docker compose exec -T db sh -c 'psql -U "$POSTGRES_USER" -d "$POSTGRES_DB"' < db/init.sql
 ```
 
 (`init.sql` borra y vuelve a crear las tablas). Alternativa: `docker compose down -v` y luego `docker compose up --build`. Ejecutar las pruebas con pytest también restaura los datos.
